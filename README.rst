@@ -136,8 +136,11 @@ Supported table formats are:
 - "fancy_grid"
 - "pipe"
 - "orgtbl"
+- "jira"
+- "psql"
 - "rst"
 - "mediawiki"
+- "moinmoin"
 - "html"
 - "latex"
 - "latex_booktabs"
@@ -223,6 +226,14 @@ also in the minor `orgtbl-mode`. Hence its name::
     | eggs   |   451 |
     | bacon  |     0 |
 
+``jira`` follows the conventions of Atlassian Jira markup language::
+
+    >>> print tabulate(table, headers, tablefmt="jira")
+    || item   ||   qty ||
+    | spam   |    42 |
+    | eggs   |   451 |
+    | bacon  |     0 |
+
 ``rst`` formats data like a simple table of the `reStructuredText`_ format::
 
     >>> print tabulate(table, headers, tablefmt="rst")
@@ -249,6 +260,15 @@ other MediaWiki-based sites::
     |-
     | bacon  || align="right"|     0
     |}
+
+``moinmoin`` format produces a table markup used in `MoinMoin`_
+wikis::
+
+    >>> print tabulate(d,headers,tablefmt="moinmoin")
+    || ''' item   ''' || ''' quantity   ''' ||
+    ||  spam    ||  41.999      ||
+    ||  eggs    ||  451         ||
+    ||  bacon   ||              ||
 
 ``html`` produces standard HTML markup::
 
@@ -370,6 +390,7 @@ Usage of the command line utility
     -1, --header              use the first row of data as a table header
     -o FILE, --output FILE    print table to FILE (default: stdout)
     -s REGEXP, --sep REGEXP   use a custom column separator (default: whitespace)
+    -F FPFMT, --float FPFMT   floating point number format (default: g)
     -f FMT, --format FMT      set output table format; supported formats:
                               plain, simple, grid, fancy_grid, pipe, orgtbl,
                               rst, mediawiki, html, latex, latex_booktabs, tsv
@@ -403,19 +424,20 @@ and numeric data, ``tabulate`` appears to be slower than
     ===========================  ==========  ===========
     Table formatter                time, μs    rel. time
     ===========================  ==========  ===========
-    join with tabs and newlines        25.0          1.0
-    csv to StringIO                    32.1          1.3
-    tabletext (0.1)                   565.1         22.6
-    asciitable (0.8.0)                777.0         31.1
-    tabulate (0.7.4)                 1369.6         54.8
-    PrettyTable (0.7.2)              3828.3        153.3
-    texttable (0.8.1)                4005.2        160.3
+    join with tabs and newlines        36.4          1.0
+    csv to StringIO                    48.6          1.3
+    tabletext (0.1)                   876.9         24.1
+    asciitable (0.8.0)               1198.3         32.9
+    tabulate (0.7.5)                 2211.9         60.8
+    PrettyTable (0.7.2)              5727.3        157.5
+    texttable (0.8.1)                6080.5        167.2
     ===========================  ==========  ===========
 
 
 Version history
 ---------------
 
+- 0.7.5: Bug fixes. ``--float`` format option for the command line utility.
 - 0.7.4: Bug fixes. ``fancy_grid`` and ``html`` formats. Command line utility.
 - 0.7.3: Bug fixes. Python 3.4 support. Iterables of dicts. ``latex_booktabs`` format.
 - 0.7.2: Python 3.2 support.

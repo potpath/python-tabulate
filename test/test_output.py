@@ -159,6 +159,23 @@ def test_psql_headerless():
     result = tabulate(_test_table, tablefmt="psql")
     assert_equal(expected, result)
 
+def test_jira():
+    "Output: jira with headers"
+    expected = '\n'.join(['|| strings   ||   numbers ||',
+                          '| spam      |   41.9999 |',
+                          '| eggs      |  451      |',])
+
+    result = tabulate(_test_table, _test_table_headers, tablefmt="jira")
+    assert_equal(expected, result)
+
+def test_jira_headerless():
+    "Output: jira without headers"
+    expected = '\n'.join(['| spam |  41.9999 |',
+                          '| eggs | 451      |',])
+
+    result = tabulate(_test_table, tablefmt="jira")
+    assert_equal(expected, result)
+
 def test_rst():
     "Output: rst with headers"
     expected = '\n'.join(['=========  =========',
@@ -205,6 +222,21 @@ def test_mediawiki_headerless():
                           '| eggs || align="right"| 451',
                           '|}',])
     result = tabulate(_test_table, tablefmt="mediawiki")
+    assert_equal(expected, result)
+
+def test_moinmoin():
+    "Output: moinmoin with headers"
+    expected = "\n".join(['|| \'\'\' strings   \'\'\' ||<style="text-align: right;"> \'\'\'   numbers \'\'\' ||',
+                          '||  spam       ||<style="text-align: right;">    41.9999  ||',
+                          '||  eggs       ||<style="text-align: right;">   451       ||',])
+    result = tabulate(_test_table, _test_table_headers, tablefmt="moinmoin")
+    assert_equal(expected, result)
+
+def test_moinmoin_headerless():
+    "Output: moinmoin without headers"
+    expected = "\n".join(['||  spam  ||<style="text-align: right;">   41.9999  ||',
+                          '||  eggs  ||<style="text-align: right;">  451       ||',])
+    result = tabulate (_test_table, tablefmt="moinmoin")
     assert_equal(expected, result)
 
 
@@ -346,4 +378,3 @@ def test_unaligned_separated():
                       ["name", "score"],
                       tablefmt=fmt, stralign=None, numalign=None)
     assert_equal(expected, result)
-
