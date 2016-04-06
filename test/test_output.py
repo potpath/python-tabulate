@@ -5,7 +5,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from tabulate import tabulate, simple_separated_format
-from common import assert_equal
+from common import assert_equal, assert_raises, SkipTest
 
 
 # _test_table shows
@@ -244,9 +244,13 @@ def test_html():
     "Output: html with headers"
     expected = '\n'.join([
         '<table>',
+        '<thead>',
         '<tr><th>strings  </th><th style="text-align: right;">  numbers</th></tr>',
+        '</thead>',
+        '<tbody>',
         '<tr><td>spam     </td><td style="text-align: right;">  41.9999</td></tr>',
         '<tr><td>eggs     </td><td style="text-align: right;"> 451     </td></tr>',
+        '</tbody>',
         '</table>',])
     result = tabulate(_test_table, _test_table_headers, tablefmt="html")
     assert_equal(expected, result)
@@ -256,8 +260,10 @@ def test_html_headerless():
     "Output: html without headers"
     expected = '\n'.join([
         '<table>',
+        '<tbody>',
         '<tr><td>spam</td><td style="text-align: right;"> 41.9999</td></tr>',
         '<tr><td>eggs</td><td style="text-align: right;">451     </td></tr>',
+        '</tbody>',
         '</table>',])
     result = tabulate(_test_table, tablefmt="html")
     assert_equal(expected, result)
@@ -314,6 +320,37 @@ def test_latex_booktabs_headerless():
     assert_equal(expected, result)
 
 
+def test_textile():
+    "Output: textile without header"
+    result = tabulate(_test_table, tablefmt="textile")
+    expected = """\
+|<. spam  |>.  41.9999 |
+|<. eggs  |>. 451      |"""
+
+    assert_equal(expected, result)
+
+
+def test_textile_with_header():
+    "Output: textile with header"
+    result = tabulate(_test_table, ['strings', 'numbers'], tablefmt="textile")
+    expected = """\
+|_.  strings   |_.   numbers |
+|<. spam       |>.   41.9999 |
+|<. eggs       |>.  451      |"""
+
+    assert_equal(expected, result)
+
+
+def test_textile_with_center_align():
+    "Output: textile with center align"
+    result = tabulate(_test_table, tablefmt="textile", stralign='center')
+    expected = """\
+|=. spam  |>.  41.9999 |
+|=. eggs  |>. 451      |"""
+
+    assert_equal(expected, result)
+
+
 def test_no_data():
     "Output: table with no data"
     expected = "\n".join(['strings    numbers',
@@ -332,14 +369,14 @@ def test_empty_data():
 
 def test_no_data_without_headers():
     "Output: table with no data and no headers"
-    expected = "\n"
+    expected = ""
     result = tabulate(None, tablefmt="simple")
     assert_equal(expected, result)
 
 
 def test_empty_data_without_headers():
     "Output: table with empty data and no headers"
-    expected = "\n"
+    expected = ""
     result = tabulate([], tablefmt="simple")
     assert_equal(expected, result)
 
@@ -378,3 +415,143 @@ def test_unaligned_separated():
                       ["name", "score"],
                       tablefmt=fmt, stralign=None, numalign=None)
     assert_equal(expected, result)
+
+
+def test_pandas_with_index():
+    "Output: a pandas Dataframe with an index"
+    try:
+        import pandas
+        df = pandas.DataFrame([["one",1],["two",None]],
+                              columns=["string","number"],
+                              index=["a","b"])
+        expected = "\n".join(
+            ['    string      number',
+             '--  --------  --------',
+             'a   one              1',
+             'b   two            nan'])
+        result = tabulate(df, headers="keys")
+        assert_equal(expected, result)
+    except ImportError:
+        print("test_pandas_with_index is skipped")
+        raise SkipTest()   # this test is optional
+
+
+def test_pandas_without_index():
+    "Output: a pandas Dataframe without an index"
+    try:
+        import pandas
+        df = pandas.DataFrame([["one",1],["two",None]],
+                              columns=["string","number"],
+                              index=["a","b"])
+        expected = "\n".join(
+            ['string      number',
+             '--------  --------',
+             'one              1',
+             'two            nan'])
+        result = tabulate(df, headers="keys", showindex=False)
+        assert_equal(expected, result)
+    except ImportError:
+        print("test_pandas_without_index is skipped")
+        raise SkipTest()   # this test is optional
+
+
+def test_pandas_rst_with_index():
+    "Output: a pandas Dataframe with an index in ReStructuredText format"
+    try:
+        import pandas
+        df = pandas.DataFrame([["one", 1], ["two", None]],
+                              columns=["string", "number"],
+                              index=["a", "b"])
+        expected = "\n".join(
+            ['====  ========  ========',
+             '..    string      number',
+             '====  ========  ========',
+             'a     one              1',
+             'b     two            nan',
+             '====  ========  ========'])
+        result = tabulate(df, tablefmt="rst", headers="keys")
+        assert_equal(expected, result)
+    except ImportError:
+        print("test_pandas_rst_with_index is skipped")
+        raise SkipTest()   # this test is optional
+
+
+def test_pandas_rst_with_named_index():
+    "Output: a pandas Dataframe with a named index in ReStructuredText format"
+    try:
+        import pandas
+        index = pandas.Index(["a", "b"], name='index')
+        df = pandas.DataFrame([["one", 1], ["two", None]],
+                              columns=["string", "number"],
+                              index=index)
+        expected = "\n".join(
+            ['=======  ========  ========',
+             'index    string      number',
+             '=======  ========  ========',
+             'a        one              1',
+             'b        two            nan',
+             '=======  ========  ========'])
+        result = tabulate(df, tablefmt="rst", headers="keys")
+        assert_equal(expected, result)
+    except ImportError:
+        print("test_pandas_rst_with_index is skipped")
+        raise SkipTest()   # this test is optional
+
+
+def test_dict_like_with_index():
+    "Output: a table with a running index"
+    dd = {"b": range(101,104)}
+    expected = "\n".join([
+        '      b',
+        '--  ---',
+        ' 0  101',
+        ' 1  102',
+        ' 2  103'])
+    result = tabulate(dd, "keys", showindex=True)
+    assert_equal(result, expected)
+
+
+def test_list_of_lists_with_index():
+    "Output: a table with a running index"
+    dd = zip(*[range(3), range(101,104)])
+    # keys' order (hence columns' order) is not deterministic in Python 3
+    # => we have to consider both possible results as valid
+    expected = "\n".join([
+        '      a    b',
+        '--  ---  ---',
+        ' 0    0  101',
+        ' 1    1  102',
+        ' 2    2  103'])
+    result = tabulate(dd, headers=["a","b"], showindex=True)
+    assert_equal(result, expected)
+
+def test_list_of_lists_with_supplied_index():
+    "Output: a table with a supplied index"
+    dd = zip(*[list(range(3)), list(range(101,104))])
+    expected = "\n".join([
+        '      a    b',
+        '--  ---  ---',
+        ' 1    0  101',
+        ' 2    1  102',
+        ' 3    2  103'])
+    result    = tabulate(dd, headers=["a","b"], showindex=[1,2,3])
+    assert_equal(result, expected)
+    # TODO: make it a separate test case
+    # the index must be as long as the number of rows
+    assert_raises(ValueError, lambda: tabulate(dd, headers=["a","b"], showindex=[1,2]))
+
+
+def test_list_of_lists_with_index_firstrow():
+    "Output: a table with a running index and header='firstrow'"
+    dd = zip(*[["a"]+list(range(3)), ["b"]+list(range(101,104))])
+    expected = "\n".join([
+        '      a    b',
+        '--  ---  ---',
+        ' 0    0  101',
+        ' 1    1  102',
+        ' 2    2  103'])
+    result = tabulate(dd, headers="firstrow", showindex=True)
+    assert_equal(result, expected)
+    # TODO: make it a separate test case
+    # the index must be as long as the number of rows
+    assert_raises(ValueError, lambda: tabulate(dd, headers="firstrow", showindex=[1,2]))

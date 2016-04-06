@@ -4,8 +4,8 @@
 
 from __future__ import print_function
 from __future__ import unicode_literals
-from tabulate import tabulate, _text_type
-from common import assert_equal, assert_in
+from tabulate import tabulate, _text_type, _long_type
+from common import assert_equal, assert_in, SkipTest
 
 
 def test_ansi_color_in_table_cells():
@@ -37,7 +37,7 @@ def test_alignment_of_colored_cells():
 
 
 def test_iter_of_iters_with_headers():
-    "Regression: Generator of generators with a generator of headers (issue #9)."
+    "Regression: Generator of generators with a gen. of headers (issue #9)."
 
     def mk_iter_of_iters():
         def mk_iter():
@@ -231,3 +231,103 @@ def test_colorclass_colors():
         result = tabulate([[s]], tablefmt="plain")
         expected = "\x1b[35m3.14\x1b[39m"
         assert_equal(result, expected)
+
+
+def test_mix_normal_and_wide_characters():
+    "Regression: wide characters in a grid format (issue #51)"
+    try:
+        import wcwidth
+        ru_text = '\u043f\u0440\u0438\u0432\u0435\u0442'
+        cn_text = '\u4f60\u597d'
+        result = tabulate([[ru_text], [cn_text]], tablefmt="grid")
+        expected = "\n".join([
+            '+--------+',
+            '| \u043f\u0440\u0438\u0432\u0435\u0442 |',
+            '+--------+',
+            '| \u4f60\u597d   |',
+            '+--------+'])
+        assert_equal(result, expected)
+    except ImportError:
+        print("test_mix_normal_and_wide_characters is skipped (requires wcwidth lib)")
+        raise SkipTest()
+
+
+def test_align_long_integers():
+    "Regression: long integers should be aligned as integers (issue #61)"
+    table = [[_long_type(1)], [_long_type(234)]]
+    result = tabulate(table, tablefmt="plain")
+    expected = "\n".join(["  1",
+                          "234"])
+    assert_equal(result, expected)
+
+
+def test_numpy_array_as_headers():
+    "Regression: NumPy array used as headers (issue #62)"
+    try:
+        import numpy as np
+        headers = np.array(["foo", "bar"])
+        result = tabulate([], headers, tablefmt="plain")
+        expected = "foo    bar"
+        assert_equal(result, expected)
+    except ImportError:
+        raise SkipTest()
+
+
+def test_boolean_columns():
+    "Regression: recognize boolean columns (issue #64)"
+    xortable = [[False, True], [True, False]]
+    expected = "\n".join(["False  True",
+                          "True   False"])
+    result = tabulate(xortable, tablefmt="plain")
+    assert_equal(result, expected)
+
+
+def test_ansi_color_bold_and_fgcolor():
+    "Regression: set ANSI color and bold face together (issue #65)"
+    table = [["1", "2", "3"], ["4", "\x1b[1;31m5\x1b[1;m", "6"], ["7", "8", "9"]]
+    result = tabulate(table, tablefmt="grid")
+    expected = "\n".join([
+        u'+---+---+---+',
+        u'| 1 | 2 | 3 |',
+        u'+---+---+---+',
+        u'| 4 | \x1b[1;31m5\x1b[1;m | 6 |',
+        u'+---+---+---+',
+        u'| 7 | 8 | 9 |',
+        u'+---+---+---+'])
+    assert_equal(result, expected)
+
+
+def test_empty_table_with_keys_as_header():
+    "Regression: headers='keys' on an empty table (issue #81)"
+    result = tabulate([], headers="keys")
+    expected = ""
+    assert_equal(result, expected)
+
+
+def test_escape_empty_cell_in_first_column_in_rst():
+    "Regression: escape empty cells of the first column in RST format (issue #82)"
+    table = [["foo", 1], ["", 2], ["bar", 3]]
+    headers = ["", "val"]
+    expected = "\n".join([
+        u"====  =====",
+        u"..      val",
+        u"====  =====",
+        u"foo       1",
+        u"..        2",
+        u"bar       3",
+        u"====  ====="])
+    result = tabulate(table, headers, tablefmt="rst")
+    assert_equal(result, expected)
+
+
+def test_ragged_rows():
+    "Regression: allow rows with different number of columns (issue #85)"
+    table = [[1,2,3], [1,2], [1,2,3,4]]
+    expected = "\n".join([
+        u"-  -  -  -",
+        u"1  2  3",
+        u"1  2",
+        u"1  2  3  4",
+        u"-  -  -  -"])
+    result = tabulate(table)
+    assert_equal(result, expected)

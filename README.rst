@@ -121,6 +121,24 @@ lists of dictionaries or named tuples::
        19  Bob
 
 
+Row Indices
+~~~~~~~~~~~
+
+By default, only pandas.DataFrame tables have an additional column
+called row index. To add a similar column to any other type of table,
+pass ``showindex="always"`` or ``showindex=True`` argument to
+``tabulate()``. To suppress row indices for all types of data, pass
+``showindex="never"`` or ``showindex=False``.  To add a custom row
+index column, pass ``showindex=rowIDs``, where ``rowIDs`` is some
+iterable::
+
+    >>> print(tabulate([["F",24],["M",19]], showindex="always"))
+    -  -  --
+    0  F  24
+    1  M  19
+    -  -  --
+
+
 Table format
 ~~~~~~~~~~~~
 
@@ -144,6 +162,7 @@ Supported table formats are:
 - "html"
 - "latex"
 - "latex_booktabs"
+- "textile"
 
 ``plain`` tables do not use any pseudo-graphics to draw lines::
 
@@ -270,14 +289,24 @@ wikis::
     ||  eggs    ||  451         ||
     ||  bacon   ||              ||
 
+``textile`` format produces a table markup used in `Textile`_ format::
+
+    >>> print tabulate(table, headers, tablefmt='textile')
+    |_.  item   |_.   qty |
+    |<. spam    |>.    42 |
+    |<. eggs    |>.   451 |
+    |<. bacon   |>.     0 |
+
 ``html`` produces standard HTML markup::
 
     >>> print tabulate(table, headers, tablefmt="html")
     <table>
+    <tbody>
     <tr><th>item  </th><th style="text-align: right;">  qty</th></tr>
     <tr><td>spam  </td><td style="text-align: right;">   42</td></tr>
     <tr><td>eggs  </td><td style="text-align: right;">  451</td></tr>
     <tr><td>bacon </td><td style="text-align: right;">    0</td></tr>
+    </tbody>
     </table>
 
 ``latex`` format creates a ``tabular`` environment for LaTeX markup::
@@ -302,6 +331,7 @@ using spacing and style from the ``booktabs`` package.
 .. _table.el: http://table.sourceforge.net/
 .. _org-mode: http://orgmode.org/manual/Tables.html
 .. _reStructuredText: http://docutils.sourceforge.net/docs/user/rst/quickref.html#tables
+.. _Textile: http://redcloth.org/hobix.com/textile/
 .. _Wikipedia: http://www.mediawiki.org/wiki/Help:Tables
 
 
@@ -374,6 +404,23 @@ columns of decimal numbers. Use ``floatfmt`` named argument::
     --  ------
 
 
+Wide (fullwidth CJK) symbols
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To properly align tables which contain wide characters (typically fullwidth
+glyphs from Chinese, Japanese or Korean languages), the user should install
+``wcwidth`` library. To install it together with ``tabulate``::
+
+    pip install tabulate[widechars]
+
+Wide character support is enabled automatically if ``wcwidth`` library is
+already installed.  To disable wide characters support without uninstalling
+``wcwidth``, set the global module-level flag ``WIDE_CHARS_MODE``::
+
+    import tabulate
+    tabulate.WIDE_CHARS_MODE = False
+
+
 Usage of the command line utility
 ---------------------------------
 
@@ -421,22 +468,23 @@ and numeric data, ``tabulate`` appears to be slower than
 
 ::
 
-    ===========================  ==========  ===========
-    Table formatter                time, μs    rel. time
-    ===========================  ==========  ===========
-    join with tabs and newlines        36.4          1.0
-    csv to StringIO                    48.6          1.3
-    tabletext (0.1)                   876.9         24.1
-    asciitable (0.8.0)               1198.3         32.9
-    tabulate (0.7.5)                 2211.9         60.8
-    PrettyTable (0.7.2)              5727.3        157.5
-    texttable (0.8.1)                6080.5        167.2
-    ===========================  ==========  ===========
-
+    =====================================  ==========  ===========
+    Table formatter                          time, μs    rel. time
+    =====================================  ==========  ===========
+    join with tabs and newlines                  27.0          1.0
+    csv to StringIO                              38.5          1.4
+    tabletext (0.1)                             529.4         19.6
+    asciitable (0.8.0)                          877.2         32.5
+    tabulate (0.7.6-dev)                       1549.7         57.5
+    tabulate (0.7.6-dev, WIDE_CHARS_MODE)      2271.5         84.2
+    PrettyTable (0.7.2)                        3986.1        147.8
+    texttable (0.8.3)                          4412.8        163.6
+    =====================================  ==========  ===========
 
 Version history
 ---------------
 
+- 0.8: FUTURE RELEASE
 - 0.7.5: Bug fixes. ``--float`` format option for the command line utility.
 - 0.7.4: Bug fixes. ``fancy_grid`` and ``html`` formats. Command line utility.
 - 0.7.3: Bug fixes. Python 3.4 support. Iterables of dicts. ``latex_booktabs`` format.
@@ -501,4 +549,5 @@ Contributors
 
 Sergey Astanin, Pau Tallada Crespí, Erwin Marsi, Mik Kocikowski, Bill Ryder,
 Zach Dwiel, Frederik Rietdijk, Philipp Bogensberger, Greg (anonymous),
-Stefan Tatschner, Emiel van Miltenburg, Brandon Bennett, Amjith Ramanujam.
+Stefan Tatschner, Emiel van Miltenburg, Brandon Bennett, Amjith Ramanujam,
+Jan Schulz, Simon Percivall, Javier Santacruz López-Cepero, Sam Denton.
